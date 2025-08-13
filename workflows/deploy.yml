@@ -1,0 +1,32 @@
+name: Deploy to Windows Server
+
+on:
+  push:
+    branches:
+      - main  # Trigger only when pushing to main branch
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build application
+        run: |
+          npm install
+          npm run build
+        shell: powershell
+
+      - name: Deploy via WinRM
+        uses: microsoft/psremotetask@v1
+        with:
+          computerName: ${{ secrets.WIN_SERVER_IP }}
+          username: ${{ secrets.WIN_SERVER_USER }}
+          password: ${{ secrets.WIN_SERVER_PASSWORD }}
+          command: |
+            cd C:\inetpub\wwwroot\MyApp
+            git pull origin main
+            npm install --production
+            iisreset
